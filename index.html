@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <title>MapRemote</title>
+    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false"></script>
+
+    <style>
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+
+      #map-canvas, #map_canvas {
+        height: 100%;
+      }
+
+      #panel {
+        position: absolute;
+        top: 5px;
+        left: 50%;
+        margin-left: -180px;
+        z-index: 5;
+        background-color: #fff;
+        padding: 5px;
+        border: 1px solid #999;
+      }
+
+      #welcome {
+        width:100%;
+        height:100%;
+        background-color:rgba(0,0,0,0.8);
+        position:absolute;
+        top:0;
+        left:0;
+
+        color:#fff;
+        box-sizing:border-box;
+        padding:10%;
+      }
+
+      .pin {
+        font-weight:bold;
+        color:#fff;
+        background-color:#111;
+        border:1px inset #111;
+        padding:10px;
+        width:20%;
+        min-width:200px;
+        text-align:center;
+        font-size:24px;
+      }
+    </style>
+
+
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      $(document).ready(function(){
+
+        var mapOptions = {
+          zoom: 4,
+          center: new google.maps.LatLng(-33, 151),
+          disableDefaultUI: true,
+          mapTypeId: google.maps.MapTypeId.ROADMAP
+        }
+        var map = new google.maps.Map(document.getElementById('map-canvas'),
+                                      mapOptions);
+
+        var clientId;
+        var sessionName;
+
+        var socket = io.connect(window.location);
+
+        socket.on('id', function (data) {
+          console.log(data);
+          clientId = data.clientId;
+          sessionName = data.sessionName;
+          $("#host-session-name").text(data.sessionName);
+          $("#join-session-button").click(function() {
+            socket.emit('joinsession', {clientId: clientId, sessionName: $("#join-session-name").val()});
+          });
+
+          socket.on('startsession', function(data) {
+            $("#welcome").fadeOut();
+            if (sessionName != data.sessionName) {
+              // controlling client, send events
+              sessionName = data.sessionName;
+              google.maps.event.addListener(map, 'bounds_changed', pushUpdate);
+              google.maps.event.addListener(map, 'center_changed', pushUpdate);
+              google.maps.event.addListener(map, 'zoom_changed', pushUpdate);
+            } else {
+              // passive server, receive events
+              socket.on('update', function(data) {
+                gotUpdate(data.updateData);  
+              });
+            }
+          });
+        });
+
+        function pushUpdate() {
+          console.log("pushing update to server");
+          zoom = map.getZoom();
+          center = map.getBounds().getCenter();
+          socket.emit('update', {
+                clientId: clientId,
+                sessionName: sessionName,
+                updateData: {
+                  zoom: zoom,
+                  centerLat: center.lat(),
+                  centerLng: center.lng()
+                }
+              });
+        }
+
+        function gotUpdate(updateData) {
+          console.log("received update - updating map!");
+          map.panTo(new google.maps.LatLng(updateData.centerLat, updateData.centerLng, true));
+          map.setZoom(updateData.zoom + 2);
+        }
+      });
+    </script>
+  </head>
+  <body>
+    <div id="map-canvas"></div>
+    <div id="welcome">
+      <h1>MapRemote</h1>
+      
+      <h2>Start a session</h2>
+      <p class="pin" id="host-session-name">Loading.</p>
+      <p>Point your mobile device to this page and enter the above code to present on this screen</p>
+
+      <h2>Join a Session</h2>
+      <input class="pin" type="text" id="join-session-name" />
+      <button id="join-session-button">Connect</button>
+      <p>Type the session code from the screen you want to present on.</p>
+    </div>
+  </body>
+</html>
+
