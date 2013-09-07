@@ -88,7 +88,6 @@
             if (sessionName != data.sessionName) {
               // controlling client, send events
               sessionName = data.sessionName;
-              google.maps.event.addListener(map, 'bounds_changed', pushUpdate);
               google.maps.event.addListener(map, 'center_changed', pushUpdate);
               google.maps.event.addListener(map, 'zoom_changed', pushUpdate);
             } else {
@@ -103,22 +102,29 @@
         function pushUpdate() {
           console.log("pushing update to server");
           zoom = map.getZoom();
-          center = map.getBounds().getCenter();
+          center = map.getCenter();
+          bounds = map.getBounds();
           socket.emit('update', {
-                clientId: clientId,
-                sessionName: sessionName,
-                updateData: {
-                  zoom: zoom,
-                  centerLat: center.lat(),
-                  centerLng: center.lng()
-                }
-              });
+            clientId: clientId,
+            sessionName: sessionName,
+            updateData: {
+              zoom: zoom,
+              bounds_ne_lat: bounds.getNorthEast().lat(),
+              bounds_ne_lng: bounds.getNorthEast().lng(),
+              bounds_sw_lat: bounds.getSouthWest().lat(),
+              bounds_sw_lng: bounds.getSouthWest().lng()
+            }
+          });
         }
 
         function gotUpdate(updateData) {
           console.log("received update - updating map!");
-          map.panTo(new google.maps.LatLng(updateData.centerLat, updateData.centerLng, true));
-          map.setZoom(updateData.zoom + 2);
+          sw = new google.maps.LatLng(updateData.bounds_sw_lat, updateData.bounds_sw_lng);
+          ne = new google.maps.LatLng(updateData.bounds_ne_lat, updateData.bounds_ne_lng);
+          map.fitBounds(new google.maps.LatLngBounds(sw, ne));
+          map.setZoom(map.getZoom() + 1);
+          //map.panTo(new google.maps.LatLng(updateData.centerLat, updateData.centerLng, true));
+          //map.setZoom(updateData.zoom + 2);
         }
       });
     </script>
