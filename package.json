@@ -1,5 +1,6 @@
 {
   "name": "MapRemote",
+  "version": "0.0.1",
   "description": "A remote control for presenting a big-screen map from your phone",
   "author": "Kristian Hentschel <kristian@kristianhentschel.com>",
   "dependencies": {
