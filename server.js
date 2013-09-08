@@ -9,10 +9,9 @@ app.listen(80);
 openSessions = new Array();
 
 io.sockets.on('connection', function (socket) {
-  
   // create an open session for this client
   // TODO: generate a random four-digit code that has not been used before. (allocate/free semantics?)
-  session = {
+  var session = {
     name: openSessions.length,
     host: socket,
     controller: null
@@ -25,26 +24,30 @@ io.sockets.on('connection', function (socket) {
 
     // The joinsession event is emitted by the controller client when the user types a session code.
     socket.on('joinsession', function (data) {
-      // find session and its host socket  
+      var session;
+      // find session and its host socket
+      console.log(socket.id + " is joining session " + data.sessionName);
       if (openSessions[data.sessionName] !== undefined && openSessions[data.sessionName] !== null) {
         // session is not open anymore - keep local copy and remove from array.
         session = openSessions[data.sessionName];
         session.controller = socket;
-        openSessions[data.sessionName] = null;
         
         // Start Controller client, forwarding events from it to Host client
         // Stop listening for join requests from it, and remove the unused session allocated.
         session.controller
           .removeAllListeners('joinsession')
           .emit('startsession', {sessionName: session.name})
-          .get('sessionName', function(sessionName) {
+          .get('sessionName', function(err, sessionName) {
             // Remove open session for client, since this will never be used.
             // TODO return sessionName to store of available names
             openSessions[sessionName] = null;
+            console.log("deleted session associated with controller: " + sessionName);
+            console.log(openSessions);
           })
           .on('update', function (data) {
             // TODO: based on eventName, send volatile or nonvolatile event.
             // TODO: use different socket.io events rather than encapsulating everything in 'update'.
+            console.log("Sending update from client "+session.controller.id+" to session "+session.name);
             session.host.emit('update', {updateData: data.updateData});
           });
 
@@ -52,7 +55,7 @@ io.sockets.on('connection', function (socket) {
         // and stop listening for join requests from it.
         session.host
           .removeAllListeners('joinsession')
-          .emit('startsession', {sessionName:session.name})
+          .emit('startsession', {sessionName:session.name});
       } else {
         // session id not found 
         console.log("client provided unknown session id");
