@@ -21,7 +21,7 @@
       }
 
       p {
-        font-weight:0.8em;
+        font-size:0.8em;
         line-height:1.8;
       }
 
@@ -111,7 +111,7 @@
             if (sessionName != data.sessionName) {
               // controlling client, send events
               sessionName = data.sessionName;
-              google.maps.event.addListener(map, 'center_changed', function() {
+              google.maps.event.addListener(map, 'dragend', function() {
                 pushUpdate("center_changed", null);
               });
               google.maps.event.addListener(map, 'zoom_changed', function() {
@@ -177,9 +177,9 @@
           ne = new google.maps.LatLng(updateData.bounds_ne_lat, updateData.bounds_ne_lng);
           bounds = new google.maps.LatLngBounds(sw, ne);
 
-          map.panTo(bounds.getCenter());
           map.fitBounds(new google.maps.LatLngBounds(sw, ne));
           map.setZoom(map.getZoom() + 1);
+          map.panTo(bounds.getCenter());
 
           if (updateData.eventName == "click") {
             if (marker !== undefined) {
