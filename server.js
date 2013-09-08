@@ -14,7 +14,7 @@ function updateSession(socket, data) {
     console.log("updating session with "+session.clients.length+" clients.");
     for (i = 0; i < session.clients.length; i++) {
       client = session.clients[i];
-      client.volatile.emit("update", {updateData: data.updateData});
+      client.emit("update", {updateData: data.updateData});
     }
   } else {
     socket.emit("error", {msg: "Invalid Session"});

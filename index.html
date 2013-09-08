@@ -62,9 +62,10 @@
 
         var mapOptions = {
           zoom: 4,
-          center: new google.maps.LatLng(-33, 151),
+          center: new google.maps.LatLng(51, 0),
           disableDefaultUI: true,
-          mapTypeId: google.maps.MapTypeId.ROADMAP
+          mapTypeId: google.maps.MapTypeId.ROADMAP,
+          visualRefresh: true
         }
         var map = new google.maps.Map(document.getElementById('map-canvas'),
                                       mapOptions);
@@ -88,8 +89,15 @@
             if (sessionName != data.sessionName) {
               // controlling client, send events
               sessionName = data.sessionName;
-              google.maps.event.addListener(map, 'center_changed', pushUpdate);
-              google.maps.event.addListener(map, 'zoom_changed', pushUpdate);
+              google.maps.event.addListener(map, 'center_changed', function() {
+                pushUpdate("center_changed", null);
+              });
+              google.maps.event.addListener(map, 'zoom_changed', function() {
+                pushUpdate("zoom_changed", null);
+              });
+              google.maps.event.addListener(map, 'click', function(e) {
+                pushUpdate("click", e);
+              });
             } else {
               // passive server, receive events
               socket.on('update', function(data) {
@@ -99,21 +107,46 @@
           });
         });
 
-        function pushUpdate() {
+        var marker;
+
+        function pushUpdate(eventName, e) {
           console.log("pushing update to server");
           zoom = map.getZoom();
           center = map.getCenter();
           bounds = map.getBounds();
+          updateData = {
+            eventName: eventName,
+            zoom: zoom,
+            bounds_ne_lat: bounds.getNorthEast().lat(),
+            bounds_ne_lng: bounds.getNorthEast().lng(),
+            bounds_sw_lat: bounds.getSouthWest().lat(),
+            bounds_sw_lng: bounds.getSouthWest().lng(),
+            click_lat: 0,
+            click_lng: 0
+          }
+
+
+          if (eventName == "click") {
+            updateData.click_lat = e.latLng.lat();
+            updateData.click_lng = e.latLng.lng();
+
+            if (marker !== undefined) {
+              marker.setMap(null);
+            }
+
+            marker = new google.maps.Marker({
+              map: map,
+              position: new google.maps.LatLng(updateData.click_lat, updateData.click_lng)
+            });
+
+            e.stop();
+          }
+
           socket.emit('update', {
             clientId: clientId,
             sessionName: sessionName,
-            updateData: {
-              zoom: zoom,
-              bounds_ne_lat: bounds.getNorthEast().lat(),
-              bounds_ne_lng: bounds.getNorthEast().lng(),
-              bounds_sw_lat: bounds.getSouthWest().lat(),
-              bounds_sw_lng: bounds.getSouthWest().lng()
-            }
+            eventName: eventName,
+            updateData: updateData
           });
         }
 
@@ -123,6 +156,21 @@
           ne = new google.maps.LatLng(updateData.bounds_ne_lat, updateData.bounds_ne_lng);
           map.fitBounds(new google.maps.LatLngBounds(sw, ne));
           map.setZoom(map.getZoom() + 1);
+
+          if (updateData.eventName == "click") {
+            if (marker !== undefined) {
+              console.log("removing marker");
+              marker.setMap(null);
+            }
+
+            marker = new google.maps.Marker({
+              map: map,
+              animation: google.maps.Animation.DROP,
+              position: new google.maps.LatLng(updateData.click_lat, updateData.click_lng),
+              visible: true
+            });
+            console.log("created marker");
+          }
           //map.panTo(new google.maps.LatLng(updateData.centerLat, updateData.centerLng, true));
           //map.setZoom(updateData.zoom + 2);
         }
