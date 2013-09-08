@@ -5,5 +5,9 @@
   "author": "Kristian Hentschel <kristian@kristianhentschel.com>",
   "dependencies": {
     "socket.io" : "0.9.x"
-  }
+  },
+  "engines": {
+    "node": "0.10.x",
+    "npm": "1.2.x"
+  }  
 }
