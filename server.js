@@ -1,7 +1,12 @@
 var app = require('http').createServer(handler)
   , io = require('socket.io').listen(app)
-  , fs = require('fs')
+  , fs = require('fs');
 
+// minimum hash length three, not including l, o to avoid I/1/l and O/0 confusion.
+var Hashids = require("hashids"),
+    hashids = new Hashids("anotsoveryrandomsalt", 3, "abcdefghijkmnpqrstuvwxyz");
+
+// bind to network port
 var port = process.env.PORT || 80;
 app.listen(port, function() {
   console.log("Listening on port "+port);
@@ -9,13 +14,14 @@ app.listen(port, function() {
 
 
 // application code
-openSessions = new Array();
+var sessionCount = 0;
+var openSessions = new Object();
 
 io.sockets.on('connection', function (socket) {
   // create an open session for this client
   // TODO: generate a random four-digit code that has not been used before. (allocate/free semantics?)
   var session = {
-    name: openSessions.length,
+    name: hashids.encrypt(sessionCount++),
     host: socket,
     controller: null
   };
@@ -33,7 +39,7 @@ io.sockets.on('connection', function (socket) {
       if (openSessions[data.sessionName] !== undefined && openSessions[data.sessionName] !== null) {
         // session is not open anymore - keep local copy and remove from array.
         session = openSessions[data.sessionName];
-        openSessions[data.sessionName] = null;
+        delete openSessions[data.sessionName];
         session.controller = socket;
         
         // Start Controller client, forwarding events from it to Host client
@@ -43,8 +49,7 @@ io.sockets.on('connection', function (socket) {
           .emit('startsession', {sessionName: session.name})
           .get('sessionName', function(err, sessionName) {
             // Remove open session for client, since this will never be used.
-            // TODO return sessionName to store of available names
-            openSessions[sessionName] = null;
+            delete openSessions[sessionName];
           })
           .on('update', function (data) {
             // TODO: based on eventName, send volatile or nonvolatile event.
