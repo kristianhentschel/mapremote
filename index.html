@@ -11,6 +11,12 @@
         height: 100%;
         margin: 0;
         padding: 0;
+        font-family:Georgia, serif;
+        font-size:24pt;
+      }
+
+      p {
+        line-height:1.8;
       }
 
       #map-canvas, #map_canvas {
@@ -47,10 +53,24 @@
         background-color:#111;
         border:1px inset #111;
         padding:10px;
-        width:20%;
-        min-width:200px;
         text-align:center;
-        font-size:24px;
+        font-size:36px;
+        max-width:100%;
+        box-sizing:border-box;
+      }
+      
+      .col {
+        text-align:center;
+        color:#ccc;
+        width:50%;
+        box-sizing:border-box;
+        float:left;
+        padding:16px;
+      }
+      @media screen and (max-width:640px) {
+        body {
+          font-size:12px;
+        }
       }
     </style>
 
@@ -74,14 +94,22 @@
         var sessionName;
 
         var socket = io.connect(window.location);
+        
+        socket.on('error', function (data) {
+          console.log(data.msg);
+          alert(data.msg);
+        });
 
         socket.on('id', function (data) {
           console.log(data);
           clientId = data.clientId;
           sessionName = data.sessionName;
-          $("#host-session-name").text(data.sessionName);
-          $("#join-session-button").click(function() {
-            socket.emit('joinsession', {clientId: clientId, sessionName: $("#join-session-name").val()});
+          $("#host-session-name").val(data.sessionName);
+          $("#join-session-name").focus().keydown(function(e) {
+            if (e.keyCode == 13) {
+              socket.emit('joinsession', {clientId: clientId, sessionName: $("#join-session-name").val()});
+              this.blur();
+            }
           });
 
           socket.on('startsession', function(data) {
@@ -110,7 +138,7 @@
         var marker;
 
         function pushUpdate(eventName, e) {
-          console.log("pushing update to server");
+          console.log("pushing "+eventName+" event to server");
           zoom = map.getZoom();
           center = map.getCenter();
           bounds = map.getBounds();
@@ -151,9 +179,12 @@
         }
 
         function gotUpdate(updateData) {
-          console.log("received update - updating map!");
+          console.log("received update "+updateData.eventName+" event from server.");
           sw = new google.maps.LatLng(updateData.bounds_sw_lat, updateData.bounds_sw_lng);
           ne = new google.maps.LatLng(updateData.bounds_ne_lat, updateData.bounds_ne_lng);
+          bounds = new google.maps.LatLngBounds(sw, ne);
+
+          map.panTo(bounds.getCenter());
           map.fitBounds(new google.maps.LatLngBounds(sw, ne));
           map.setZoom(map.getZoom() + 1);
 
@@ -180,16 +211,19 @@
   <body>
     <div id="map-canvas"></div>
     <div id="welcome">
-      <h1>MapRemote</h1>
-      
-      <h2>Start a session</h2>
-      <p class="pin" id="host-session-name">Loading.</p>
-      <p>Point your mobile device to this page and enter the above code to present on this screen</p>
-
-      <h2>Join a Session</h2>
-      <input class="pin" type="text" id="join-session-name" />
-      <button id="join-session-button">Connect</button>
-      <p>Type the session code from the screen you want to present on.</p>
+      <div class="col"> 
+        <input class="pin" size="4" readonly="readonly" id="host-session-name"/>
+        <h2>Presentation Screen</h2>
+        <p>On your mobile device, enter the above code to control this screen.</p>
+      </div> 
+      <div class="col">
+        <input class="pin" size="4" type="text" id="join-session-name" />
+        <h2><label for="join-session-name">Remote Control</label></h2>
+        <p>Type the code shown on the screen you want to display the map on.</p>
+      </div>
+      <div style="clear:both;">
+        <p>MapRemote lets you remote-control a map on a big screen from your mobile device. The big screen will follow any changes to the map you make on your device. You can place a marker by single-tapping a point on the map and access further options through the menu button.</p>
+      </div>
     </div>
   </body>
 </html>
