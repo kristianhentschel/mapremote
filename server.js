@@ -41,13 +41,10 @@ io.sockets.on('connection', function (socket) {
             // Remove open session for client, since this will never be used.
             // TODO return sessionName to store of available names
             openSessions[sessionName] = null;
-            console.log("deleted session associated with controller: " + sessionName);
-            console.log(openSessions);
           })
           .on('update', function (data) {
             // TODO: based on eventName, send volatile or nonvolatile event.
             // TODO: use different socket.io events rather than encapsulating everything in 'update'.
-            console.log("Sending update from client "+session.controller.id+" to session "+session.name);
             session.host.emit('update', {updateData: data.updateData});
           });
 
