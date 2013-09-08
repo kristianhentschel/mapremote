@@ -33,6 +33,7 @@ io.sockets.on('connection', function (socket) {
       if (openSessions[data.sessionName] !== undefined && openSessions[data.sessionName] !== null) {
         // session is not open anymore - keep local copy and remove from array.
         session = openSessions[data.sessionName];
+        openSessions[data.sessionName] = null;
         session.controller = socket;
         
         // Start Controller client, forwarding events from it to Host client
