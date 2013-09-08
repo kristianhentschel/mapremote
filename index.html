@@ -11,8 +11,13 @@
         height: 100%;
         margin: 0;
         padding: 0;
-        font-family:Georgia, serif;
-        font-size:24pt;
+        font-family: Georgia, serif;
+        font-size:18pt;
+      }
+
+      a {
+        color:#3333ff;
+        font-weight:bold;
       }
 
       p {
@@ -21,17 +26,6 @@
 
       #map-canvas, #map_canvas {
         height: 100%;
-      }
-
-      #panel {
-        position: absolute;
-        top: 5px;
-        left: 50%;
-        margin-left: -180px;
-        z-index: 5;
-        background-color: #fff;
-        padding: 5px;
-        border: 1px solid #999;
       }
 
       #welcome {
@@ -51,7 +45,7 @@
         font-weight:bold;
         color:#fff;
         background-color:#111;
-        border:1px inset #111;
+        border:1px inset #333;
         padding:10px;
         text-align:center;
         font-size:36px;
@@ -67,9 +61,10 @@
         float:left;
         padding:16px;
       }
+
       @media screen and (max-width:640px) {
         body {
-          font-size:12px;
+          font-size:10pt;
         }
       }
     </style>
@@ -209,16 +204,16 @@
       <div class="col"> 
         <input class="pin" size="4" readonly="readonly" id="host-session-name"/>
         <h2>Presentation Screen</h2>
-        <p>On your mobile device, enter the above code to control this screen.</p>
+        <p>On your mobile device, enter this code code.</p>
       </div> 
       <div class="col">
         <input class="pin" size="4" type="text" id="join-session-name" />
         <h2><label for="join-session-name">Remote Control</label></h2>
-        <p>Type the code shown on the screen you want to display the map on.</p>
+        <p>Type the code from your presentation screen here and hit Enter to get started.</p>
       </div>
       <div style="clear:both;">
-        <p>MapRemote lets you remote-control a map on a big screen from your mobile device. The big screen will follow any changes to the map you make on your device. You can place a marker by single-tapping a point on the map and access further options through the menu button.</p>
-        <p>See <a href="https://github.com/kristianhentschel/mapremote">mapremote on GitHub</a> for more information. &copy; 2013, Kristian Hentschel.</p>
+        <p>MapRemote lets you remote-control a map on a big screen from your mobile device. The presentation screen will follow any changes you make to the map on your mobile. You can place a marker by tapping a point on the map. Point both browsers to this page to get started.</p>
+        <p><a href="https://github.com/kristianhentschel/mapremote">mapremote on GitHub</a>. &copy; 2013, Kristian Hentschel.</p>
       </div>
     </div>
     <div id="menu">
