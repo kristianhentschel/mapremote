@@ -74,7 +74,6 @@
       }
     </style>
 
-
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script>
@@ -90,24 +89,21 @@
         var map = new google.maps.Map(document.getElementById('map-canvas'),
                                       mapOptions);
 
-        var clientId;
         var sessionName;
 
         var socket = io.connect(window.location);
         
         socket.on('error', function (data) {
-          console.log(data.msg);
-          alert(data.msg);
+          console.log(data);
         });
 
         socket.on('id', function (data) {
           console.log(data);
-          clientId = data.clientId;
           sessionName = data.sessionName;
           $("#host-session-name").val(data.sessionName);
           $("#join-session-name").focus().keydown(function(e) {
             if (e.keyCode == 13) {
-              socket.emit('joinsession', {clientId: clientId, sessionName: $("#join-session-name").val()});
+              socket.emit('joinsession', {sessionName: $("#join-session-name").val()});
               this.blur();
             }
           });
@@ -127,7 +123,7 @@
                 pushUpdate("click", e);
               });
             } else {
-              // passive server, receive events
+              // passive server, listen for events
               socket.on('update', function(data) {
                 gotUpdate(data.updateData);  
               });
@@ -171,7 +167,6 @@
           }
 
           socket.emit('update', {
-            clientId: clientId,
             sessionName: sessionName,
             eventName: eventName,
             updateData: updateData
@@ -224,6 +219,9 @@
       <div style="clear:both;">
         <p>MapRemote lets you remote-control a map on a big screen from your mobile device. The big screen will follow any changes to the map you make on your device. You can place a marker by single-tapping a point on the map and access further options through the menu button.</p>
       </div>
+    </div>
+    <div id="menu">
+    
     </div>
   </body>
 </html>
